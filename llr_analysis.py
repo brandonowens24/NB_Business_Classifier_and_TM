@@ -1,21 +1,23 @@
 from datasets import load_dataset
-dataset = load_dataset("FinanceInc/auditor_sentiment")
+dataset = load_dataset("zeroshot/twitter-financial-news-sentiment")
 from tqdm import tqdm
 import collections
 import math
 import nltk
-from nltk.corpus import stopwords
-nltk.download('stopwords')
+from nltk.corpus import stopwords; nltk.download('stopwords')
 stopwords = set(stopwords.words('english'))
 import string
 import re
 import numpy as np
 import argparse
 from scipy.sparse import csr_matrix
+from gensim.models import LdaModel
+from gensim.matutils import Sparse2Corpus
 
 email_pat = re.compile(r"\S+@\S+\.\S+")
 url_pat = re.compile("^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$")
 
+# Grab command-line arguments
 def from_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('vector', default='count', nargs='?', choices=['count', 'binary', 'frequency'], help='Choose format for box of words. Default is count.')
@@ -24,7 +26,7 @@ def from_args():
 
     return args
 
-
+# Separate individual documents being passed into a list of tokens
 def tokenize(document):
     doc_tokens = []
     # use nltk sentence tokenization
@@ -42,18 +44,20 @@ def tokenize(document):
         sent_tokens = ([word for word in sent_tokens if
                             word not in stopwords
                             #and word in vocab
-                            and not re.search('\d+',word)
+                            and not re.search(r'\d+', word)
+                            and not re.search(r'https\S?', word)
                             and len(word) > 2])
         # either use char ngrams or full words
         doc_tokens += sent_tokens
     return doc_tokens
 
-
+# Takes collection of documents and converts them into a B.O.W matrix depending on arguments
 def compute_doc_vectors_(documents, tf_type='count', use_idf='False'):
     token2id = {}
     current_next_id = 0
     document_dicts = []
 
+    print("Tokenizing Corpora:")
     for document in tqdm(documents):
         # Tokenize each document individually
         tokens = tokenize(document)
@@ -98,7 +102,7 @@ def compute_doc_vectors_(documents, tf_type='count', use_idf='False'):
     return matrix, id2token
 
 
-
+# Use Naive Bayes to take matrix and comput log-likelihood ratios for each word with each classifier tag
 def train_nb(training_labels, matrix, id2token):
     num_mat_rows = matrix.shape[0]
     num_mat_col = matrix.shape[1]
@@ -107,6 +111,7 @@ def train_nb(training_labels, matrix, id2token):
     total_words_with_label = collections.defaultdict(int)
 
     # Go through each training corpus provided and the total word counts for labels and the counts of specific words for labels
+    print("Training Naive Bayes:")
     for doc in tqdm(range(num_mat_rows)):
         label = training_labels[doc]
         # Collect unique sentiments
@@ -119,8 +124,6 @@ def train_nb(training_labels, matrix, id2token):
             word = id2token[col]
             # With the Scipy Matrix, some rows and columns do not exist
             word_with_label_counts[label][word] += matrix[doc, col]
-
-
 
     # Calculate likelihoods
     likelihood_comp = {}
@@ -135,7 +138,10 @@ def train_nb(training_labels, matrix, id2token):
         most_likely_label = None
         # Calculate the likelihood for each label based on a given word. Not smoothed    
         for label in labels:
-            numerator = word_with_label_counts[label][word]
+            try:
+                numerator = word_with_label_counts[label][word]
+            except KeyError:
+                numerator = 0
             denominator = total_words_with_label[label]
             likelihood_comp[word][label] = ((numerator + 1) / (denominator + num_mat_col))
         
@@ -154,22 +160,48 @@ def train_nb(training_labels, matrix, id2token):
         log_likelihood = 0
         # Have to re-grab the num/denom and then apply smoothing because if I just combined them, they woulud have double the vocab in the denominator
         for label in other_likely:
-            numerator += word_with_label_counts[label][word]
+            try:
+                numerator += word_with_label_counts[label][word]
+            except KeyError:
+                pass
             denominator += total_words_with_label[label]
+
+        numerator = numerator.item()
+        denominator = denominator.item()
+        max_val = max_val.item()
+
         log_unlikelihood = math.log((numerator + 1) / (denominator + num_mat_col))
         log_likelihood = math.log(max_val) 
         
         # Creates dictionary with each word, their most likely label, and the llr
         llr[word][most_likely_label] = log_likelihood - log_unlikelihood
 
-    return llr
+    sorted_llr = dict(sorted(llr.items(), key=lambda x: list(x[1].values()), reverse=True))
+
+    appended_sorted_llr = {k: sorted_llr[k] for k in list(sorted_llr)[:10]}
+    for key, value in appended_sorted_llr.items():
+        print(f'{key:<15}{value}')
+
+    return sorted_llr
+
+def model_topics(matrix, id2token):
+    corpus = Sparse2Corpus(matrix, documents_columns=False)
+    lda = LdaModel(corpus=corpus, id2word=id2token, num_topics=5)
+    for i in range(0, lda.num_topics):
+        print (lda.print_topic(i, topn=10) + '\n')
+
+
+
+
+
+
 
 if __name__ == "__main__":
-    documents = dataset['train']['sentence'][::200]
-    training_labels = dataset['train']['label'][::200]
+    documents = dataset['train']['text'][::50]
+    training_labels = dataset['train']['label'][::50]
     args = from_args()
     vector_type = args.vector
     idf = args.idf
     matrix, id2token = compute_doc_vectors_(documents, args.vector, args.idf)
-    llr = train_nb(training_labels, matrix, id2token)
-    print(llr)
+    sorted_llr = train_nb(training_labels, matrix, id2token)
+    model_topics(matrix, id2token)
