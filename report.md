@@ -8,7 +8,7 @@ As alluded to in the title, it contains finance-related news tweets and their se
 This dataset contains about 10,000 rows of financial news tweets and an associated label in its training set. The labels [0, 1, 2] correspond with [Bearish News, Bullish News, and Neutral News]. Additionally, the data was split roughly into a 85% training and 15% validation set. 
 <br></br>
 
-**INSERT IMAGE OF DATASET**
+![Dataset](https://github.com/brandonowens24/NLP_HW1/blob/main/images/Dataset.png)
 
 
 ## 2. METHODOLOGY
@@ -23,6 +23,10 @@ Training the naive-bayes model drew upon some of our Colab code; however, implem
 **TALK ABOUT GRAPHING**
 
 ## 3. RESULTS AND ANALYSIS
+### Naive-Bayes Log-Likelihood Ratios for Top 10 Tokens
+![Top 10](https://github.com/brandonowens24/NLP_HW1/blob/main/images/Top_llrs.png)
+Provides the 10 tokens with the largest log-likelihood ratios from all 10,000 documents found within the training corpus.
+
 
 ## 4. DISCUSSION
 
