@@ -13,6 +13,7 @@ import argparse
 from scipy.sparse import csr_matrix
 from gensim.models import LdaModel
 from gensim.matutils import Sparse2Corpus
+import json
 
 email_pat = re.compile(r"\S+@\S+\.\S+")
 url_pat = re.compile("^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$")
@@ -178,9 +179,8 @@ def train_nb(training_labels, matrix, id2token):
 
     sorted_llr = dict(sorted(llr.items(), key=lambda x: list(x[1].values()), reverse=True))
 
-    appended_sorted_llr = {k: sorted_llr[k] for k in list(sorted_llr)[:10]}
-    for key, value in appended_sorted_llr.items():
-        print(f'{key:<15}{value}')
+    with open('sorted_llr_dictionary.json', 'w') as file:
+        json.dump(sorted_llr, file)
 
     return sorted_llr
 
@@ -190,18 +190,24 @@ def model_topics(matrix, id2token):
     for i in range(0, lda.num_topics):
         print (lda.print_topic(i, topn=10) + '\n')
 
+def print_top_10_llr(sorted_llr):
+    appended_sorted_llr = {k: sorted_llr[k] for k in list(sorted_llr)[:10]}
+    for key, value in appended_sorted_llr.items():
+        print(f'{key:<15}{value}')
 
-
-
-
-
-
+        
 if __name__ == "__main__":
-    documents = dataset['train']['text'][::50]
-    training_labels = dataset['train']['label'][::50]
+    documents = dataset['train']['text']
+    training_labels = dataset['train']['label']
     args = from_args()
     vector_type = args.vector
     idf = args.idf
     matrix, id2token = compute_doc_vectors_(documents, args.vector, args.idf)
-    sorted_llr = train_nb(training_labels, matrix, id2token)
+    # sorted_llr = train_nb(training_labels, matrix, id2token)
+
+    # Grab Saved JSON of sorted_llr dictionary so my model doesn't have to train every time.
+    with open('sorted_llr_dictionary.json', 'r') as file:
+        sorted_llr = json.load(file)
+    
+    print_top_10_llr(sorted_llr)
     model_topics(matrix, id2token)
