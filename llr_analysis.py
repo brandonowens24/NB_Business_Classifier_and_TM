@@ -14,6 +14,7 @@ from scipy.sparse import csr_matrix
 from gensim.models import LdaModel
 from gensim.matutils import Sparse2Corpus
 import json
+import plotly.graph_objects as go
 
 email_pat = re.compile(r"\S+@\S+\.\S+")
 url_pat = re.compile("^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$")
@@ -184,18 +185,18 @@ def train_nb(training_labels, matrix, id2token):
 
     return sorted_llr
 
-def model_topics(matrix, id2token):
-    corpus = Sparse2Corpus(matrix, documents_columns=False)
-    lda = LdaModel(corpus=corpus, id2word=id2token, num_topics=5)
-    for i in range(0, lda.num_topics):
-        print (lda.print_topic(i, topn=10) + '\n')
-
 def print_top_10_llr(sorted_llr):
     appended_sorted_llr = {k: sorted_llr[k] for k in list(sorted_llr)[:10]}
     for key, value in appended_sorted_llr.items():
         print(f'{key:<15}{value}')
 
-        
+
+def model_topics(matrix, id2token):
+    corpus = Sparse2Corpus(matrix, documents_columns=False)
+    lda = LdaModel(corpus=corpus, id2word=id2token, num_topics=5)
+    for i in range(0, lda.num_topics):
+        print (lda.print_topic(i, topn=10) + '\n')
+    
 if __name__ == "__main__":
     documents = dataset['train']['text']
     training_labels = dataset['train']['label']
