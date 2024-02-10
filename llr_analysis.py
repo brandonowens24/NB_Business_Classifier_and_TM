@@ -4,6 +4,7 @@ from tqdm import tqdm
 import collections
 import math
 import nltk
+from nltk import PorterStemmer
 from nltk.corpus import stopwords; nltk.download('stopwords')
 stopwords = set(stopwords.words('english'))
 import string
@@ -11,10 +12,8 @@ import re
 import numpy as np
 import argparse
 from scipy.sparse import csr_matrix
-from gensim.models import LdaModel
-from gensim.matutils import Sparse2Corpus
+import gensim
 import json
-import plotly.graph_objects as go
 
 email_pat = re.compile(r"\S+@\S+\.\S+")
 url_pat = re.compile("^https?:\\/\\/(?:www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b(?:[-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)$")
@@ -24,12 +23,13 @@ def from_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('vector', default='count', nargs='?', choices=['count', 'binary', 'frequency'], help='Choose format for box of words. Default is count.')
     parser.add_argument('-i', '--idf', action='store_true', help="Uses Inverse Document Frequency")
+    parser.add_argument('-s', '--stem', action='store_true', help="Applied Porter Stemmer to tokens")
     args = parser.parse_args()
 
     return args
 
 # Separate individual documents being passed into a list of tokens
-def tokenize(document):
+def tokenize(document, stem='False'):
     doc_tokens = []
     # use nltk sentence tokenization
     sentences = nltk.sent_tokenize(document)
@@ -49,12 +49,15 @@ def tokenize(document):
                             and not re.search(r'\d+', word)
                             and not re.search(r'https\S?', word)
                             and len(word) > 2])
+        if stem:
+            porter = PorterStemmer()
+            sent_tokens = ([porter.stem(word) for word in sent_tokens])
         # either use char ngrams or full words
         doc_tokens += sent_tokens
     return doc_tokens
 
 # Takes collection of documents and converts them into a B.O.W matrix depending on arguments
-def compute_doc_vectors_(documents, tf_type='count', use_idf='False'):
+def compute_doc_vectors_(documents, tf_type='count', use_idf='False', stem='False'):
     token2id = {}
     current_next_id = 0
     document_dicts = []
@@ -62,7 +65,7 @@ def compute_doc_vectors_(documents, tf_type='count', use_idf='False'):
     print("Tokenizing Corpora:")
     for document in tqdm(documents):
         # Tokenize each document individually
-        tokens = tokenize(document)
+        tokens = tokenize(document, stem)
         document_dict = collections.defaultdict(int)
 
         for token in tokens:
@@ -75,7 +78,8 @@ def compute_doc_vectors_(documents, tf_type='count', use_idf='False'):
         document_dicts.append(document_dict)
     
     vectors = []
-    for document_dict in document_dicts:
+    print("Converting to Matrix: ")
+    for document_dict in tqdm(document_dicts):
         vector = [document_dict[token_id] for token_id in range(current_next_id)]
         # Vectors are composed of the counts of each token from each document
         vectors.append(vector)
@@ -102,7 +106,6 @@ def compute_doc_vectors_(documents, tf_type='count', use_idf='False'):
     id2token = {id: tok for tok, id in token2id.items() }
 
     return matrix, id2token
-
 
 # Use Naive Bayes to take matrix and comput log-likelihood ratios for each word with each classifier tag
 def train_nb(training_labels, matrix, id2token):
@@ -185,30 +188,93 @@ def train_nb(training_labels, matrix, id2token):
 
     return sorted_llr
 
+# Takes the top 10 llr from the corpus and prints them out.
 def print_top_10_llr(sorted_llr):
     appended_sorted_llr = {k: sorted_llr[k] for k in list(sorted_llr)[:10]}
     for key, value in appended_sorted_llr.items():
         print(f'{key:<15}{value}')
 
-
+# Creates an LDA Model, which finds the top 10 corpus topics, and then determines the probability of these topics in each document
 def model_topics(matrix, id2token):
-    corpus = Sparse2Corpus(matrix, documents_columns=False)
-    lda = LdaModel(corpus=corpus, id2word=id2token, num_topics=5)
-    for i in range(0, lda.num_topics):
-        print (lda.print_topic(i, topn=10) + '\n')
+    corpus = gensim.matutils.Sparse2Corpus(matrix, documents_columns=False)
+    # lda = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2token, num_topics=10)
+    # lda.save('lda.model')
     
+    lda = gensim.models.ldamodel.LdaModel.load('lda.model')
+
+    lda_topics = lda.print_topics(num_topics=10, num_words=10)
+
+    for topic in lda_topics:
+        print(topic)
+
+
+    document_topic_probs = {}
+    print("Determining Document Topic Probabilities:")
+    for i, doc in tqdm(enumerate(corpus)):
+
+        doc_topics = lda.get_document_topics(doc, minimum_probability=0)
+
+        topic_probs = {}
+
+        for topic, prob in doc_topics:
+            topic_probs[topic] = prob
+        document_topic_probs[i] = topic_probs
+
+
+    return document_topic_probs
+
+# Returns the the topic distribution for each label of the training dataset
+def average_label_topic_distribution(document_topic_probs, l0rows, l1rows, l2rows):
+    classifier_topic_avg_prob = {}
+    for classifier in range(0, 3):
+        classifier_topic_avg_prob[classifier] = {}
+        label_rows = locals()[f"l{classifier}rows"]
+        for topic in range(0, 10):
+            prob = 0
+            for row in label_rows:
+                prob += document_topic_probs[row][topic]
+            classifier_topic_avg_prob[classifier][topic] = prob/len(locals()[f"l{classifier}rows"])
+    return classifier_topic_avg_prob
+
+def determine_top_topics_for_classifiers(classifier_topic_avg_prob):
+    for outer_key, outer_values in classifier_topic_avg_prob.items():
+        sorted_inner = sorted(outer_values.items(), key=lambda x: x[1], reverse=True)
+        print(sorted_inner)
+        
+
 if __name__ == "__main__":
     documents = dataset['train']['text']
     training_labels = dataset['train']['label']
+
     args = from_args()
     vector_type = args.vector
     idf = args.idf
-    matrix, id2token = compute_doc_vectors_(documents, args.vector, args.idf)
+    stem = args.stem
+    matrix, id2token = compute_doc_vectors_(documents, args.vector, args.idf, args.stem)
     # sorted_llr = train_nb(training_labels, matrix, id2token)
 
     # Grab Saved JSON of sorted_llr dictionary so my model doesn't have to train every time.
-    with open('sorted_llr_dictionary.json', 'r') as file:
-        sorted_llr = json.load(file)
+    # with open('sorted_llr_dictionary.json', 'r') as file:
+    #     sorted_llr = json.load(file)
     
-    print_top_10_llr(sorted_llr)
-    model_topics(matrix, id2token)
+    # print_top_10_llr(sorted_llr)
+    document_topic_probs = model_topics(matrix, id2token)
+
+    rows_with_label_0 = []
+    rows_with_label_1 = []
+    rows_with_label_2 = []
+
+    print("Filtering Rows by Classifier: ")
+    for i, label in tqdm(enumerate(dataset['train']['label'])):
+        # Check if the label is equal to 0
+        if label == 0:
+            # If so, append the row number to the list
+            rows_with_label_0.append(i)
+        elif label == 1:
+            # If so, append the row number to the list
+            rows_with_label_1.append(i)
+        else:
+            rows_with_label_2.append(i)
+
+    classifier_topic_avg_prob = average_label_topic_distribution(document_topic_probs, rows_with_label_0, rows_with_label_1, rows_with_label_2)
+    determine_top_topics_for_classifiers(classifier_topic_avg_prob)
