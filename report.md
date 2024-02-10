@@ -24,8 +24,8 @@ Training the naive-bayes model drew upon some of our Colab code; however, implem
 
 ## 3. RESULTS AND ANALYSIS
 ### Naive-Bayes Log-Likelihood Ratios for Top 10 Tokens
-![Top 10](https://github.com/brandonowens24/NLP_HW1/blob/main/images/Top_llrs.png)
-Provides the 10 tokens with the largest log-likelihood ratios from all 10,000 documents found within the training corpus.
+![Top 10](https://github.com/brandonowens24/NLP_HW1/blob/main/images/Top_llrs.png)<br>
+Provides the 10 tokens with the largest log-likelihood ratios from all 10,000 documents found within the training corpus and identifies their associated sentiment classifier that is most likely. This graph was created in R.
 
 
 ## 4. DISCUSSION
