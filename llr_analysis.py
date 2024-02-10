@@ -197,10 +197,10 @@ def print_top_10_llr(sorted_llr):
 # Creates an LDA Model, which finds the top 10 corpus topics, and then determines the probability of these topics in each document
 def model_topics(matrix, id2token):
     corpus = gensim.matutils.Sparse2Corpus(matrix, documents_columns=False)
-    # lda = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2token, num_topics=10)
+    lda = gensim.models.ldamodel.LdaModel(corpus=corpus, id2word=id2token, num_topics=10)
     # lda.save('lda.model')
     
-    lda = gensim.models.ldamodel.LdaModel.load('lda.model')
+    # lda = gensim.models.ldamodel.LdaModel.load('lda.model')
 
     lda_topics = lda.print_topics(num_topics=10, num_words=10)
 
@@ -243,6 +243,7 @@ def determine_top_topics_for_classifiers(classifier_topic_avg_prob):
         
 
 if __name__ == "__main__":
+    print("Initializing: ")
     documents = dataset['train']['text']
     training_labels = dataset['train']['label']
 
