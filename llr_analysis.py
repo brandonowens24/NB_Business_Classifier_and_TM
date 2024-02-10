@@ -239,7 +239,8 @@ def average_label_topic_distribution(document_topic_probs, l0rows, l1rows, l2row
 def determine_top_topics_for_classifiers(classifier_topic_avg_prob):
     for outer_key, outer_values in classifier_topic_avg_prob.items():
         sorted_inner = sorted(outer_values.items(), key=lambda x: x[1], reverse=True)
-        print(sorted_inner)
+        print(outer_key)
+        print(sorted_inner[:3])
         
 
 if __name__ == "__main__":
