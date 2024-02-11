@@ -1,11 +1,11 @@
 # Final Report
 
 ## 1. DATASET
-The provided dataset was taken from [zeroshot's 'twitter-financial-news-sentiment' on Hugging Face](https://huggingface.co/datasets/zeroshot/twitter-financial-news-sentiment). 
+The provided dataset was taken from [FinanceInc 'auditor_sentiment' on Hugging Face](https://huggingface.co/datasets/zeroshot/twitter-financial-news-sentiment). 
 <br></br>
-As alluded to in the title, it contains finance-related news tweets and their sentiment. It contains roughly 10,000 rows of financial news tweets and an associated label in its training set. The labels [0, 1, 2] correspond with [Bearish News, Bullish News, and Neutral News]. As an example, 
->TEXT: "WORK, XPO, PYX and AMKR among after hour movers", LABEL: 2
-In other words, the tweet has neutral sentiment.
+As alluded to in the title, it contains small text clippings of financial news. The dataset is roughly 3500 rows with these bits of business news and an associated label in its training set. The labels [0, 1, 2] correspond with [Negative News, Neutral News, and Positive News]. As an example, 
+>TEXT: "Altia 's operating profit jumped to EUR 47 million from EUR 6.6 million.", LABEL: "2"
+In other words, the following statement has positive sentiment.
 <br></br>
 This could be useful if an analyst, user, or owner of some commodity of a company or multiple companies has a very limited amount of time to analyze the public sentiment and news occurring with the companies that they are involved with. 
 <br></br>
@@ -27,8 +27,15 @@ All data returned from this script was delivered via command-line text; thus, al
 ## 3. RESULTS AND ANALYSIS
 ### Naive-Bayes Log-Likelihood Ratios for Top 10 Tokens
 ![Top 10](https://github.com/brandonowens24/NLP_HW1/blob/main/images/Top_llrs.png)<br>
-Provides the 10 tokens with the largest log-likelihood ratios from all 10,000 documents found within the training corpus and identifies their associated sentiment classifier that is most likely. This graph was created in R.
+Provides the 10 tokens with the largest log-likelihood ratios out of all tokens in the 3,500 documents found within the training corpus. This means these tokens have the highest difference between its likelihood from one label compared to the other two. From the graph, this means that "slipped" has the highest likelihood of happening with its label ("negative") compared to the other two labels. This graph was created in R.
 
+### Topic Modeling: Top 10 Topics 
+![Topics](https://github.com/brandonowens24/NLP_HW1/blob/main/images/Topics.png)<br>
+> **Green Table:** The ten most probable topics from the dataset (human-labeled). Each topic has the ten most probable words for the topic and their probabilites of occurring in these topics. The dataset was tokenized, but not stemmed, and put into BoW based on count. <br>
+> **Orange Table:** The ten most probable topics from the dataset (human-labeled). Each topic has the ten most probable words for the topic and their probabilites of occurring in these topics. The dataset was tokenized, including stemming, and put into BoW based on count with IDF. 
+
+## Topic Modeling: Top 3 Topics for Each Classifier
+![Top Document Topics](https://github.com/brandonowens24/NLP_HW1/blob/main/images/TopDocTopics.png)<br>
 
 ## 4. DISCUSSION
 
