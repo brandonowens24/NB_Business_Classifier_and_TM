@@ -1,5 +1,5 @@
 from datasets import load_dataset
-dataset = load_dataset("zeroshot/twitter-financial-news-sentiment")
+dataset = load_dataset("FinanceInc/auditor_sentiment")
 from tqdm import tqdm
 import collections
 import math
@@ -191,6 +191,7 @@ def train_nb(training_labels, matrix, id2token):
 # Takes the top 10 llr from the corpus and prints them out.
 def print_top_10_llr(sorted_llr):
     appended_sorted_llr = {k: sorted_llr[k] for k in list(sorted_llr)[:10]}
+    print("Top Ten Tokens with Highest LLRs: ")
     for key, value in appended_sorted_llr.items():
         print(f'{key:<15}{value}')
 
@@ -204,6 +205,7 @@ def model_topics(matrix, id2token):
 
     lda_topics = lda.print_topics(num_topics=10, num_words=10)
 
+    print("Top Ten Topics in Corpus: ")
     for topic in lda_topics:
         print(topic)
 
@@ -237,6 +239,7 @@ def average_label_topic_distribution(document_topic_probs, l0rows, l1rows, l2row
     return classifier_topic_avg_prob
 
 def determine_top_topics_for_classifiers(classifier_topic_avg_prob):
+    print("Top 3 Topics for Each Classifier: ")
     for outer_key, outer_values in classifier_topic_avg_prob.items():
         sorted_inner = sorted(outer_values.items(), key=lambda x: x[1], reverse=True)
         print(outer_key)
@@ -245,7 +248,7 @@ def determine_top_topics_for_classifiers(classifier_topic_avg_prob):
 
 if __name__ == "__main__":
     print("Initializing: ")
-    documents = dataset['train']['text']
+    documents = dataset['train']['sentence']
     training_labels = dataset['train']['label']
 
     args = from_args()
@@ -256,10 +259,10 @@ if __name__ == "__main__":
     # sorted_llr = train_nb(training_labels, matrix, id2token)
 
     # Grab Saved JSON of sorted_llr dictionary so my model doesn't have to train every time.
-    # with open('sorted_llr_dictionary.json', 'r') as file:
-    #     sorted_llr = json.load(file)
+    with open('sorted_llr_dictionary.json', 'r') as file:
+        sorted_llr = json.load(file)
     
-    # print_top_10_llr(sorted_llr)
+    print_top_10_llr(sorted_llr)
     document_topic_probs = model_topics(matrix, id2token)
 
     rows_with_label_0 = []
