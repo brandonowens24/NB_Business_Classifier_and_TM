@@ -28,7 +28,7 @@ All data returned from this script was delivered via command-line text; thus, al
 ## 3. RESULTS AND ANALYSIS
 ### Naive-Bayes Log-Likelihood Ratios for Top 10 Tokens
 ![Top 10](https://github.com/brandonowens24/NLP_HW1/blob/main/images/Top_llrs.png)<br>
-Provides the 10 tokens with the largest log-likelihood ratios out of all tokens in the 3,500 documents found within the training corpus. This means these tokens have the highest difference between its likelihood from one label compared to the other two. From the graph, this means that "slipped" has the highest likelihood of happening with its label ("negative") compared to the other two labels. This graph was created in R.
+> Provides the 10 tokens with the largest log-likelihood ratios out of all tokens in the 3,500 documents found within the training corpus. This means these tokens have the highest difference between its likelihood from one label compared to the other two. From the graph, this means that "slipped" has the highest likelihood of happening with its label ("negative") compared to the other two labels. This graph was created in R.
 
 ### Topic Modeling: Top 10 Topics 
 ![Topics](https://github.com/brandonowens24/NLP_HW1/blob/main/images/Topics.png)<br>
@@ -42,6 +42,24 @@ Provides the 10 tokens with the largest log-likelihood ratios out of all tokens 
 
 ## 4. DISCUSSION
 
-### Dataset Findings
+## Dataset Findings
+### Log-Likelihood Ratio
+After doing the Naive-Bayes analysis and determining the log-likelihood ratios and their most likely classifier for each token, my graph has the exact results that you would expect. Words like "slipped", "warning", "decreased", and "drop" have the highest likelihood differences and thus have the highest probability of occurring for the "negative" label. This makes sense because all of these words have a poor connotation -- especially in terms of the financial market. The same is true, but opposite for the positive words like "improved", "grew", "narrowed", "positive", etc. An interesting finding was that among the top ten log-likelihood ratios, no tokens were deemed to be "neutral". This is most likely because a lot of the "neutral" labelled statement had both negative and positive remarks within them.
 
-### Lessons Learned
+### Topic Modelling
+After applying Latent-Dirichlet Allocation on my chosen dataset, I was a bit disappointed at the similarity of topics. Their word coherence to form a topic based on words appearing together makes sense that most topics would be related and have some repeat words, but I found it very difficult to manually assign topic names when they all fell into the same realm. This issue may have been resolved if I could have found a financial dataset with full news articles as the documents instead of 1-2 sentence bodies of text. Additionally, topics were more distinguishable when I applied the inverse-document-frequency argument. This makes sense because words that appear over the course of more documents are weighed less, and thus it is easier to distinguish more unique cohesive words.  <br>
+
+Additionally, when applying Topic Modelling to find the top 3 topics for each label, I was more satisfied with the inverse-document-frequency argument once again. Because the topics were more distinguishable, I am able to see better trends between documents labeled "negative" and "positive" based on their topics. For instance, both focused on comparative outcomes and balance sheet statements, but negative documents tended to focus more on mentioning words of currency like "million", "euro", "mln", "eur", etc. The neutral label was also better defined as including more news words that didn't show benefit or decrement like "product", "system", "company", "news", etc. 
+
+## Lessons Learned
+### Naive Bayes
+The naive bayes model that we created in lecture was extremely useful at determining logical log-likelihood-ratios. With that being said, my NB model takes forever to train (~3 minutes per 1,000 documents). It was easier to just save the json dictionary of the llr_ratios instead of having to run my funciton and train the model every single time. Perhaps using a library would be much faster for future projects.
+
+### Topic Modelling
+I realized pretty quickly into topic modelling that I should have chosen a more diverse dataset that wasn't all taken from the same news source. They had a tendency of writing their updates in a Twitter-like format with short sentences that made distinguishing the topics themselves very difficult. It would have been much cooler and more useful to see what sectors and companies had a positive/negative year based on their association with a label in the news. In the future, I need to do a better job of finding a dataset with larger bodies of text for the corpora. 
+
+### Libraries/Code
+I was able to familiarize myself with gensim and some of the cool features they had in there. Specifically that the id2token we created in class for our Naive-Bayes model actually could be plugged back in as a dictionary for the unsupervised learning! I also got more practice with Python -- specifically some problems I was having that was solved with the enumerate function, and other issues like grabbing inner_keys from a dictionary of dictionaries. 
+
+### For the Future
+Because of time conflicts, I settled for modelling my visualizations in R and Microsoft Excel. I would have much rather preferred to automate the entire project, but the time it would have taken was not worth it for me. For future projects I would like to try to automate them, but I am learning quickly that sometimes the time is not worth the extra effort -- especially for a singular homework assignment. This is something I struggle with and need to better weigh my time management vs. value of the project I am working on. 
