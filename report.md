@@ -5,6 +5,7 @@ The provided dataset was taken from [FinanceInc 'auditor_sentiment' on Hugging F
 <br></br>
 As alluded to in the title, it contains small text clippings of financial news. The dataset is roughly 3500 rows with these bits of business news and an associated label in its training set. The labels [0, 1, 2] correspond with [Negative News, Neutral News, and Positive News]. As an example, 
 >TEXT: "Altia 's operating profit jumped to EUR 47 million from EUR 6.6 million.", LABEL: "2"
+
 In other words, the following statement has positive sentiment.
 <br></br>
 This could be useful if an analyst, user, or owner of some commodity of a company or multiple companies has a very limited amount of time to analyze the public sentiment and news occurring with the companies that they are involved with. 
@@ -36,6 +37,8 @@ Provides the 10 tokens with the largest log-likelihood ratios out of all tokens 
 
 ## Topic Modeling: Top 3 Topics for Each Classifier
 ![Top Document Topics](https://github.com/brandonowens24/NLP_HW1/blob/main/images/TopDocTopics.png)<br>
+>**Left Table:** Tokenization without stemming, BoW without IDF. Provides the top three topics for each label. Gives the probability of that topic occurring for a document of that label type. These topics correspond to the top 10 topics found in the documents from the section above `Topic Modeling: Top 10 Topics`. For example, a document with negative classification has a 10.3% chance to fall into the "production" topic. <br>
+>**Right Table:** Tokenization with stemming, BoW with IDF. Provides the top three topics for each label. Gives the probability of that topic occurring for a document of that label type. These topics correspond to the top 10 topics found in the documents from the section above `Topic Modeling: Top 10 Topics`. For example, a document with negative classification has a 24.4% chance to fall into the "comparative outcomes" topic.
 
 ## 4. DISCUSSION
 
