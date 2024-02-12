@@ -22,6 +22,7 @@ Feel free to add your own code to save your preferred LDA model.
 * `'-h' '--help'` Argument help <br>
 * `'-s' '--stem'` Stems corpus to root word using nltk Port Stemmer<br>
 * `'-i' '--idf'` Multiplies BoW matrix by Inverse-Document-Frequency<br>
+* `'-u' '--update'` Updates Naive Bayes LLR dictionary. Only necessary if DB is updated. Default is False. 
 * `vector choice: "count", "binary", "frequency"` Chooses which term-frequency format for BoW. Default is count
 
 ## Dataset Specifics
